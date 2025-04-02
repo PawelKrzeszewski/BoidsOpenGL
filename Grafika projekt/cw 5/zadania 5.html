@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Zadania 5</title>
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    span.underline{text-decoration: underline;}
+    div.column{display: inline-block; vertical-align: top; width: 50%;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+  </style>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+  <!--[if lt IE 9]>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv-printshiv.min.js"></script>
+  <![endif]-->
+</head>
+<body>
+<h2 id="oświetlenie-phonga">Oświetlenie Phonga</h2>
+<p>W trakcie tych zajęć zajmiemy się implementacją modelu oświetlenia Phonga. Na poprzednich zajęciach zbudowaliśmy układ słoneczny. Wykorzystamy go w trakcie tych zajęć. Jeżeli go zrobiłeś, to przekopiuj do <code>ex_5_1.hpp</code> kod z poprzednich zajęć. W przeciwnym wypadku wykorzystaj ten, który jest zaimplementowany w <code>ex_5_1.hpp</code>. W zadaniu będzie nam potrzebny statek latający przed kamerą, jak nie ma tego w Twojej scenie to skopiuj to z <code>ex_5_1.hpp</code>.</p>
+<h2 id="zadanie---diffuse">Zadanie - <em>diffuse</em></h2>
+<p>Oblicz we fragment shaderze oświetlenie obiektu przy użyciu modelu Phonga dla odbicia rozproszonego (*diffuse)</p>
+<p> 1. Przekaż źródło światła. Na razie przyjmiemy kierunkowy model oświetlenia, dlatego źródło będzie opisane jako wektor kierunkowy:</p>
+<ul>
+<li><p>Prześlij do shadera fragmentów zmienna typu <code>uniform vec3</code> (nazwij ją np. <code>lightDir</code>), w której będzie się znajdować wektor kierunkowy.</p></li>
+<li><p>Należy to zrobić podobnie do tego, jak przesyłany jest kolor.</p></li>
+<li><p>Jako kierunek światła wybierz dowolny wektor jednostkowy. (Możesz wziąć dowolny niezerowy wektor następnie go znormalizować).</p></li>
+<li><p>Dodatkowo prześlij drugą zmienną <code>uniform vec3 lightColor</code>, w której umieścimy kolor światła. Prześlij tam wartości ze zmiennej <code>glm::vec3 lightColor</code>.</p></li>
+</ul>
+<ol start="2" type="1">
+<li>Oblicz natężenie w shaderze fragmentów:</li>
+</ol>
+<ul>
+<li><p>prześlij normalne z shadera fragmentów do shadera wierzchołków</p></li>
+<li><p>znormalizuj wektor normalny przed użyciem go w obliczeniach (uśrednianie wektorów normalnych wierzchołków może spowodować, że przestaje one być jednostkowe).</p></li>
+<li><p>Natężenie to iloczyn skalarny wektora normalnego powierzchni i odwrotnego wektora kierunku padania światła. Skorzystaj z funkcji <code>dot</code>.</p></li>
+<li><p>Natężenie nie może być ujemne. Przytnij natężenie do zera przy użyciu: <code>x = max(x, 0.0)</code></p></li>
+</ul>
+<ol start="3" type="1">
+<li>Zastosuj obliczone natężenie, aby zmodyfikować kolor obiektu:</li>
+</ol>
+<ul>
+<li>Przemnóż kolor RGB fragmentu przez obliczone natężenie i przez kolor światła z <code>lightColor</code>.</li>
+</ul>
+<h2 id="zadanie---obsługa-obrotów">Zadanie - obsługa obrotów</h2>
+<p>Dlaczego oświetlenie statku nie zmienia się podczas jego obracania?</p>
+<p>(Wektory normalne są w układzie lokalnym modelu, a wektor padania światła w układzie świata)</p>
+<p>Należy wykonać transformacje wektorów normalnych do przestrzeni świata: - Prześlij macierz modelu rysowanego obiektu (<em>model Matrix</em>) jako osobna zmienna do vertex shadera (<code>uniform mat4</code>).<br />
+- Przemnóż przez te macierz wektor normalny wierzchołka przed przesłaniem go do shadera fragmentów. - Współrzędna <strong>w</strong> dopisana do wektora przed mnożeniem przez macierz powinna być ustawiona na 0. Wynika to z tego, że w przypadku transformacji wektorów reprezentujących kierunki w przestrzeni, nie chcemy dokonywać translacji — np. wektor normalny do powierzchni zależy od orientacji obiektu, ale nie od jego pozycji (przesunięcia) w przestrzeni świata.</p>
+<h2 id="zadanie---specular">Zadanie - <em>specular</em></h2>
+<p>Uzupełnił model o czynnik odbicia zwierciadlanego (<em>specular</em>). W tym celu:</p>
+<ol type="1">
+<li>Potrzebny będzie wektor od rysowanego fragmentu do pozycji kamery:</li>
+</ol>
+<ul>
+<li>Wyślij pozycje kamery (<code>cameraPos</code>) jako kolejna zmienna do fragment shadera.<br />
+</li>
+<li>Podobnie jak wektory normalne prześlij z vertex do fragment shadera pozycje wierzchołków (<code>vertexPosition</code>) w przestrzeni świata (czyli pomnożone przez macierz <strong>modelMatrix</strong>). Pamiętaj, że tym razem wektory reprezentują punkty, a nie kierunki - współrzędna <strong>w</strong> przed mnożeniem musi być ustawiona na 1. W wyniku rasteryzacji otrzymamy w shaderze fragmentu jego pozycję (nazywaną pozycją fragmentu)</li>
+<li>Oblicz wektor <strong>V</strong> (<em>view direction</em>) jako znormalizowaną różnice pozycji kamery i pozycji fragmentu.</li>
+</ul>
+<ol start="2" type="1">
+<li>Oblicz natężenie światła odbitego we <em>fragment shaderze</em>:</li>
+</ol>
+<ul>
+<li>Oblicz wektor kierunku odbicia światła <strong>R</strong> przy użyciu funkcji <a href="https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/reflect.xhtml"><code>reflect</code></a>. Pamiętaj, żeby przesłać do funkcji odwrócony wektor kierunku światła.</li>
+<li>Oblicz natężenie: iloczyn skalarny <strong>V</strong> i <strong>R</strong>, przycięty do zera ( <code>max(...,0.0)</code> ), a następnie podniesiony do wysokiej potęgi (np. 8, 50, 1000), która jest miara połyskliwości powierzchni.</li>
+</ul>
+<ol start="3" type="1">
+<li>Ustal ostateczny kolor piksela na <code>objectColor * diffuse + lightColor * specular</code>. Oznacza to najprostszy przypadek, gdy kolor światła odbitego jest biały.</li>
+</ol>
+<h2 id="zadanie---oświetlenie-punktowe">Zadanie - oświetlenie punktowe</h2>
+<p>W układzie planetarnym obiektem oświetlającym powinno być słońce, dlatego zamień oświetlenie kierunkowe na punktowe:</p>
+<ul>
+<li>Zamiast przesyłać (w <code>lightDir</code>) kierunek światła, prześlij pozycję słońca do fragment shadera (taką jak ustawiłeś w punkcie powyżej) jako uniform vec3 (nazwij go <code>lightPos</code>).</li>
+<li>Oblicz kierunek światła odejmując od pozycji światła pozycję fragmentu, znormalizuj wynik. Zapisz wynik w zmiennej <code>lightDir</code>.<br />
+</li>
+<li>Słońce będzie czarne, nie martw się tym, tylko spójrz na punkt następny.</li>
+</ul>
+<h2 id="zadanie---shader-słońca">Zadanie - shader słońca</h2>
+<p>Źródło światła znajduje się wewnątrz kuli, która reprezentuje słońce, dlatego jest czarna. By to naprawić, utwórz osobny shader, który będzie odpowiadać za renderowanie słońca.</p>
+<p>Celem tego zadania jest stworzenie shadera (<strong>shader_5_sun.vert</strong>_ i <strong>shader_5_sun.frag</strong>), który będzie odpowiadał wyłącznie za rysowanie słońca. Poprzednie shadery (<strong>shader_4_1.vert</strong>_ i <strong>shader_5_1.frag</strong>) nadal mają rysować pozostałe obiekty. a) zainicjalizuj <em>program</em> (shadery): - Pliki <strong>shader_5_sun.vert</strong> i <strong>shader_5_sun.frag</strong> są identyczne z 5_1** przed zmianami, będą punktem wyjścia dla <em>shadera</em> słońca.</p>
+<ol type="1">
+<li><p>Utwórz zmienną globalną <code>GLuint programSun</code> na adres shadera słońca. Stwórz <em>program</em> za pomocą <code>shaderLoader.CreateProgram</code> analogicznie jak tworzy się <code>program</code> z <strong>shader_5_1.vert</strong> i <strong>shader_5_1.frag</strong> (parametry wejściowe to ścieżka do shadera wierzchołków i fragmentów <strong>shader_5_sun.vert</strong> i <strong>shader_5_sun.frag</strong>).</p></li>
+<li><p>W skomplikowanym projekcie różne typy obiektów rysuje się przy użyciu różnych shaderów, zate potrzebna jest w programie architektura, która na to pozwala. Ustaw odpowiedni <em>program</em> (shadery) do rysowania słońca:</p></li>
+</ol>
+<ul>
+<li>funkcja <code>drawObject</code> korzysta z globalnej zmiennej <code>program</code>, żeby wskazywać shadery do rysowania. Dodaj argument do funkcji, który będziesz przekazywać adres <em>programu</em>, który ma być wykorzystany do rysowania.</li>
+<li>dodaj odpowiedni <em>program</em> w wywołaniach <code>drawObject</code>.</li>
+</ul>
+
+
+<h2 id="zadanie---osłabienie-światła-attenuation"> Zadanie - Zmień shader słońca na bardziej realistyczny </h2>
+
+<p>Na poniższym obrazku jest zdjęcie słońca. Jest ono ciemniejsze na brzegach spróbuj uzyskać podobny efekt. Przydadzą się wektory normalnych i wektor <strong>V</strong> jak i funkcja mix.</p>
+<p><img src="./img/sun.png" /></p>
+
+<h2 id="osłabienie-światła-tone-mapping">Osłabienie światła, tone mapping</h2>
+<h3 id="zadanie---osłabienie-światła-attenuation">Zadanie - Osłabienie światła (attenuation)</h3>
+<p>Światło pochodzące z punktowego źródła traci na sile wraz z dystansem. Wynika to z tego, że rozprasza się na większą powierzchnię. Dodaj ten efekt do shadera. Zamiast brać kolor światła bezpośrednio, podziel go przez kwadrat dystansu od źródła świata. Przed kwadratowaniem przemnoz diystans przez 10.0.</p>
+
+<h4 id="tone-mapping">Tone mapping</h4>
+<p>Przez obecną zmianę scena stała się ciemna. Wymaga to od nas zmiany ‘koloru’ światła na wartości dużo większe niż do tej pory. Jeśli teraz to zrobimy i przesadzimy w drugą stronę, otrzymamy efekt prześwietlenia. Wynika to z ograniczenia zakresu kolorów do <span class="math inline">\([0,1]\)</span> (obsługą wyższych wartości nazywamy HDR). Rozwiązaniem jest pracowanie na wartościach powyżej 1 wykorzystanie <em>tone mappingu</em> do przeniesienia ich w zakres <span class="math inline">\([0,1]\)</span>. Istnieje wiele wzorów, które są wykorzystywane do tego, jeden z nich to:</p>
+<p><span class="math display">\[C_{mapped} = 1-e^{-C * E},\]</span> gdzie C to kolor sceny a E to parametr ekspozycji (z zakresu <span class="math inline">\((0,\infty)\)</span>, który może być dostosowany w zależności od jasności.
+
+<h3 id="zadanie">Zadanie - Tone mapping</h3>
+Zwiększ siłę słońca przynajmniej stukrotnie. Zaimplementuj powyższą metodę tone mappingu i dodaj możliwość sterowania ekspozycją za pomocą klawiszy 1 i 2.</p>
+<h3 id="zadanie">Zadanie*</h3>
+<p>Dodaj drugie źródło oświetlenia w postaci reflektora statku. Reflektor świeci tylko w określonym stożku,dlatego oprócz pozycji <code>spotPos</code> posiada również kierunek <code>spotDir</code> i kąt świecenia <span class="math inline">\(\phi\)</span>. Po obliczeniu dla niego <code>lightDir</code> należy sprawdzić, czy iloczyn skalarny pomiędzy <code>lightDir</code> a <code>spodDir</code> jest większy niż <span class="math inline">\(\cos\phi\)</span> . Jeżeli nie jest, to stożek nie świeci w tym miejscu. Można ułatwić sobie implementację wielu źródeł światła poprzez przeniesienie obliczeń oświetlenia do funkcji, która przyjmuje kierunek światła i siłę naświetlenie.</p>
+Zwróć uwagę, że SpotDir to co innego niż light Dir w poprzednich zadaniach.
+<p><img src="./img/spotlight.png" /> </p>
+</body>
+</html>
